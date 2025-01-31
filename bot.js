@@ -1,5 +1,5 @@
 const { Telegraf } = require('telegraf');
-const  instagramGetUrl  = require('instagram-url-direct');
+const instagramGetUrl = require('instagram-url-direct');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
@@ -15,44 +15,63 @@ function normalizeInstagramUrl(url) {
     return url;
 }
 
-const downloadVideo = (videoUrl, filePath) => {
-    return new Promise((resolve, reject) => {
+const downloadVideo = async (videoUrl, filePath) => {
+    try {
         const writer = fs.createWriteStream(filePath);
-        axios
-            .get(videoUrl, { responseType: 'stream' })
-            .then((response) => {
-                response.data.pipe(writer);
-                writer.on('finish', resolve);
-                writer.on('error', reject);
-            })
-            .catch(reject);
-    });
+        const response = await axios.get(videoUrl, { responseType: 'stream' });
+
+        return new Promise((resolve, reject) => {
+            response.data.pipe(writer);
+            writer.on('finish', resolve);
+            writer.on('error', (err) => {
+                console.error('Ошибка при записи видео:', err.message);
+                reject(err);
+            });
+        });
+    } catch (err) {
+        console.error('Ошибка при загрузке видео:', err.message);
+        throw err;
+    }
+};
+
+const isValidUrl = (string) => {
+    try {
+        new URL(string);
+        return true;
+    } catch {
+        return false;
+    }
 };
 
 bot.on('text', async (ctx) => {
     const url = ctx.message.text.trim();
-    if (!url.includes('instagram.com') && !url.includes('ddinstagram.com')) {
+    if ((!url.includes('instagram.com') && !url.includes('ddinstagram.com')) || !isValidUrl(url)) {
+        console.log('Получено сообщение, которое не является ссылкой:', url);
         return;
     }
 
     const normalizedUrl = normalizeInstagramUrl(url);
+
     try {
         const result = await instagramGetUrl(normalizedUrl);
 
-        if (!result || !Array.isArray(result) || result.length === 0 || !result[0].url) {
-             // ctx.reply('Не удалось найти видео по указанной ссылке.');
-            return
+        if (!result || !Array.isArray(result) || result.length === 0 || !result[0].url_list) {
+            console.log('Не удалось найти видео по указанной ссылке:', normalizedUrl);
+            return;
         }
 
         const videoUrl = result[0].url_list[0];
         const videoPath = path.join(__dirname, 'video.mp4');
-        await downloadVideo(videoUrl, videoPath);
-
-        await ctx.replyWithVideo({ source: videoPath });
-        fs.unlinkSync(videoPath);
+        try {
+            await downloadVideo(videoUrl, videoPath);
+            await ctx.replyWithVideo({ source: videoPath });
+        } finally {
+            if (fs.existsSync(videoPath)) {
+                fs.unlinkSync(videoPath);
+            }
+        }
     } catch (error) {
-        console.error('Ошибка:', error);
-       // ctx.reply('Произошла ошибка при обработке ссылки.');
+        console.error('Ошибка при обработке ссылки:', normalizedUrl, error.message);
     }
 });
 
