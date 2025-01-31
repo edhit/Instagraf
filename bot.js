@@ -1,6 +1,6 @@
 require('dotenv').config(); // Загружаем переменные окружения из .env
 const { Telegraf } = require('telegraf');
-const { instagramdl } = require('instagram-url-dl');
+const { instagramdl } = require('instagram-url-direct');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
@@ -39,7 +39,7 @@ bot.on('text', async (ctx) => {
         }
 
         // Скачивание видео
-        const videoUrl = result[0].url;
+        const videoUrl = result[0].url_list[0];
         const videoResponse = await axios.get(videoUrl, { responseType: 'stream' });
         const videoPath = path.join(__dirname, 'video.mp4');
         const writer = fs.createWriteStream(videoPath);
