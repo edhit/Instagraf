@@ -67,7 +67,7 @@ bot.on('text', async (ctx) => {
             }
         }
     } catch (error) {
-        console.error('Ошибка при обработке ссылки:', normalizedUrl, error.message);
+        console.error('Ошибка при обработке ссылки:', normalizedUrl, error);
     }
 });
 
