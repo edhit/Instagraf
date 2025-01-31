@@ -50,7 +50,7 @@ bot.on('text', async (ctx) => {
         return;
     }
 
-    const normalizedUrl = normalizeInstagramUrl(url);
+    const normalizedUrl = url
 
     try {
         const result = await instagramGetUrl(normalizedUrl);
