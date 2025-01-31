@@ -55,11 +55,6 @@ bot.on('text', async (ctx) => {
     try {
         const result = await instagramGetUrl(normalizedUrl);
 
-        if (!result || !Array.isArray(result) || result.length === 0 || !result[0].url_list) {
-            console.log('Не удалось найти видео по указанной ссылке:', normalizedUrl);
-            return;
-        }
-
         const videoUrl = result[0].url_list[0];
         const videoPath = path.join(__dirname, 'video.mp4');
         try {
