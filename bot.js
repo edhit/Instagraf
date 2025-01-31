@@ -1,5 +1,5 @@
 const { Telegraf } = require('telegraf');
-const { instagramGetUrl } = require('instagram-url-direct');
+const  instagramGetUrl  = require('instagram-url-direct');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
