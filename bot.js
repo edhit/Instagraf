@@ -1,70 +1,62 @@
-require('dotenv').config(); // Загружаем переменные окружения из .env
 const { Telegraf } = require('telegraf');
-const { instagramdl } = require('instagram-url-direct');
+const { instagramGetUrl } = require('instagram-url-direct');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config();
 
-// Получаем токен бота из переменных окружения
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
-// Функция для нормализации ссылки
 function normalizeInstagramUrl(url) {
-    // Если ссылка с ddinstagram.com, преобразуем её в обычную ссылку на Instagram
     if (url.includes('ddinstagram.com')) {
         const reelCode = url.split('/reel/')[1].split('/')[0];
         return `https://www.instagram.com/reel/${reelCode}/`;
     }
-    // Если ссылка уже с instagram.com, оставляем как есть
     return url;
 }
 
-// Обработка сообщений с ссылками
+const downloadVideo = (videoUrl, filePath) => {
+    return new Promise((resolve, reject) => {
+        const writer = fs.createWriteStream(filePath);
+        axios
+            .get(videoUrl, { responseType: 'stream' })
+            .then((response) => {
+                response.data.pipe(writer);
+                writer.on('finish', resolve);
+                writer.on('error', reject);
+            })
+            .catch(reject);
+    });
+};
+
 bot.on('text', async (ctx) => {
-    const url = ctx.message.text;
+    const url = ctx.message.text.trim();
+    if (!url.includes('instagram.com') && !url.includes('ddinstagram.com')) {
+        return;
+    }
 
+    const normalizedUrl = normalizeInstagramUrl(url);
     try {
-        // Проверка, что ссылка ведет на Instagram или ddinstagram
-        if (!url.includes('instagram.com') && !url.includes('ddinstagram.com')) {
-            return; // Игнорируем некорректные ссылки
+        const result = await instagramGetUrl(normalizedUrl);
+
+        if (!result || !Array.isArray(result) || result.length === 0 || !result[0].url) {
+             // ctx.reply('Не удалось найти видео по указанной ссылке.');
+            return
         }
 
-        // Нормализация ссылки
-        const normalizedUrl = normalizeInstagramUrl(url);
-
-        // Получение данных о видео
-        const result = await instagramdl(normalizedUrl);
-        if (result.length === 0) {
-            return; // Игнорируем, если видео не найдено
-        }
-
-        // Скачивание видео
         const videoUrl = result[0].url_list[0];
-        const videoResponse = await axios.get(videoUrl, { responseType: 'stream' });
         const videoPath = path.join(__dirname, 'video.mp4');
-        const writer = fs.createWriteStream(videoPath);
+        await downloadVideo(videoUrl, videoPath);
 
-        videoResponse.data.pipe(writer);
-
-        writer.on('finish', async () => {
-            // Отправка видео в группу
-            await ctx.replyWithVideo({ source: videoPath });
-
-            // Удаление видео с сервера
-            fs.unlinkSync(videoPath);
-        });
-
-        writer.on('error', (err) => {
-            console.error('Ошибка при скачивании видео:', err);
-            // Ничего не отправляем в группу
-        });
-
+        await ctx.replyWithVideo({ source: videoPath });
+        fs.unlinkSync(videoPath);
     } catch (error) {
         console.error('Ошибка:', error);
-        // Ничего не отправляем в группу
+       // ctx.reply('Произошла ошибка при обработке ссылки.');
     }
 });
 
-// Запуск бота
-bot.launch();
-console.log('Бот запущен...');
+bot.launch().then(() => console.log('Бот успешно запущен...'));
+
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
