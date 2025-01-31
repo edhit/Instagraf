@@ -1,0 +1,18 @@
+{
+  "name": "instagraf",
+  "version": "1.0.0",
+  "description": "Your project description",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "telegraf": "^4.12.0",
+    "instagram-url-dl": "^1.0.2",
+    "axios": "^1.6.2",
+    "fs": "0.0.1-security"
+  },
+  "author": "Your Name",
+  "license": "ISC"
+}
