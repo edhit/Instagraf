@@ -51,6 +51,7 @@ bot.on('text', async (ctx) => {
     }
 
     const normalizedUrl = url
+    console.log(url)
 
     try {
         const result = await instagramGetUrl(normalizedUrl);
