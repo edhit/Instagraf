@@ -55,7 +55,7 @@ bot.on('text', async (ctx) => {
 
     try {
         const result = await instagramGetUrl(normalizedUrl);
-
+console.log(result)
         const videoUrl = result.url_list[0];
         const videoPath = path.join(__dirname, 'video.mp4');
         try {
