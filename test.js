@@ -1,4 +1,4 @@
-const { instagramGetUrl } = require('instagram-url-direct');
+const instagramGetUrl = require('instagram-url-direct');
 
 (async () => {
     const url = 'https://www.instagram.com/reel/КОД_ВИДЕО/';
