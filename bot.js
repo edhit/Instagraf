@@ -34,7 +34,7 @@ const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 //         console.error('Ошибка при загрузке видео:', err.message);
 //         throw err;
 //     }
-// };
+//  };
 
 const isValidUrl = (string) => {
     try {
